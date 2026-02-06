@@ -1,0 +1,17 @@
+# Lightweight Face Recognition (OpenCV + SFace)
+# =============================================
+# RAM Usage: ~150MB idle, ~300MB peak
+# Speed: ~100-200ms per verification
+
+# Web Framework
+Flask==3.0.0
+flask-cors==4.0.0
+
+# Face Recognition (OpenCV DNN - No TensorFlow!)
+opencv-python>=4.8.0
+numpy>=1.26.0
+
+# Utilities
+python-dotenv==1.0.0
+gunicorn==21.2.0
+flasgger==0.9.7.1
