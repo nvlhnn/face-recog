@@ -1,0 +1,47 @@
+# Docker Swarm Stack for Face Recognition API
+# Deploy: docker stack deploy -c stack.yml face-recog-api
+# 
+# NOTE: Build the image first:
+#   docker build -t face-recog-api:latest .
+
+version: '3.8'
+
+services:
+  app:
+    image: face-recog-api:latest
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+        max_attempts: 3
+      labels:
+        # Traefik configuration
+        - "traefik.enable=true"
+        # HTTPS router (main)
+        - "traefik.http.routers.face-recog.rule=Host(`face-api.dev-1.jarivis.com`)"
+        - "traefik.http.routers.face-recog.entrypoints=websecure"
+        - "traefik.http.routers.face-recog.tls.certresolver=le"
+        - "traefik.http.services.face-recog.loadbalancer.server.port=5000"
+    environment:
+      - ENV=production
+      - ACCESS_TOKEN=${ACCESS_TOKEN:-your-secret-token-here}
+      - FACE_TOLERANCE=0.363
+    volumes:
+      - face-recog-data:/app/data
+    networks:
+      - reverse-proxy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
+volumes:
+  face-recog-data:
+    driver: local
+
+networks:
+  reverse-proxy:
+    external: true
