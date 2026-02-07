@@ -3,17 +3,22 @@ version: '3.8'
 services:
   face-api:
     build: .
-    container_name: face-recog-api
+    container_name: api-face-recog
     restart: unless-stopped
-    ports:
-      - "5000:5000"
     environment:
       - ENV=production
       - ACCESS_TOKEN=${ACCESS_TOKEN:-}
       - FACE_TOLERANCE=0.363
     volumes:
-      # Persist database outside container
       - ./data:/app/data
+    labels:
+      # Traefik configuration
+      - "traefik.enable=true"
+      - "traefik.http.routers.face-recog.rule=Host(`face-api.dev-1.jarivis.com`)"
+      - "traefik.http.routers.face-recog.entrypoints=web"
+      - "traefik.http.services.face-recog.loadbalancer.server.port=5000"
+    networks:
+      - traefik_default
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:5000/health"]
       interval: 30s
@@ -21,10 +26,6 @@ services:
       retries: 3
       start_period: 10s
 
-# Optional: Add Apache reverse proxy
-#  apache:
-#    image: httpd:2.4-alpine
-#    ports:
-#      - "80:80"
-#    depends_on:
-#      - face-api
+networks:
+  traefik_default:
+    external: true
