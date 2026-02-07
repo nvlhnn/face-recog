@@ -54,11 +54,11 @@ def init_swagger(app):
     swagger_template = {
         "info": {
             "title": "Face Recognition API",
-            "description": "REST API for face registration, verification, and user management (Powered by DeepFace + SFace)",
+            "description": "REST API for face registration, verification, and user management (Powered by OpenCV + SFace)",
             "version": "2.0.0",
         },
         "basePath": "/",
-        "schemes": ["http", "https"],
+        "schemes": ["https", "http"],  # HTTPS first!
         "tags": [
             {"name": "Health", "description": "Health check endpoints"},
             {"name": "Face", "description": "Face registration and verification"},
