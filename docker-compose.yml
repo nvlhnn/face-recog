@@ -1,0 +1,30 @@
+version: '3.8'
+
+services:
+  face-api:
+    build: .
+    container_name: face-recog-api
+    restart: unless-stopped
+    ports:
+      - "5000:5000"
+    environment:
+      - ENV=production
+      - ACCESS_TOKEN=${ACCESS_TOKEN:-}
+      - FACE_TOLERANCE=0.363
+    volumes:
+      # Persist database outside container
+      - ./data:/app/data
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
+# Optional: Add Apache reverse proxy
+#  apache:
+#    image: httpd:2.4-alpine
+#    ports:
+#      - "80:80"
+#    depends_on:
+#      - face-api
