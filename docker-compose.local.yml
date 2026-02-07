@@ -1,0 +1,22 @@
+version: '3.8'
+
+# Local development - no Traefik needed
+services:
+  face-api:
+    build: .
+    container_name: face-recog-local
+    restart: unless-stopped
+    ports:
+      - "5000:5000"
+    environment:
+      - ENV=staging
+      - ACCESS_TOKEN=dev-token-123
+      - FACE_TOLERANCE=0.363
+    volumes:
+      - ./data:/app/data
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s

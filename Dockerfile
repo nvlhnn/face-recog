@@ -1,50 +1,33 @@
-# Multi-Stage Dockerfile for Face Recognition API
-# Final image: ~200MB
+# Ultra-lightweight Face Recognition API
+# Target: ~400MB
 
-# ============================================
-# Stage 1: Builder - Install dependencies
-# ============================================
-FROM python:3.11-slim AS builder
+FROM python:3.11-slim
 
 WORKDIR /app
 
-# Install build dependencies
+# Install minimal runtime deps (no libgl needed for headless!)
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    gcc \
-    && rm -rf /var/lib/apt/lists/*
-
-# Install Python packages to a separate directory
-COPY requirements.txt .
-RUN pip install --no-cache-dir --prefix=/install -r requirements.txt gunicorn
-
-
-# ============================================
-# Stage 2: Runtime - Final slim image
-# ============================================
-FROM python:3.11-slim AS runtime
-
-# Install only runtime dependencies (no build tools)
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    libgl1 \
     libglib2.0-0 \
+    libsm6 \
+    libxext6 \
+    libxrender1 \
     curl \
-    && rm -rf /var/lib/apt/lists/*
+    && rm -rf /var/lib/apt/lists/* \
+    && apt-get clean
 
-WORKDIR /app
+# Install Python packages
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt gunicorn
 
-# Copy installed packages from builder
-COPY --from=builder /install /usr/local
-
-# Copy application code
+# Copy app
 COPY . .
 
 # Download models
 RUN python download_models.py
 
-# Create data directory
+# Create data dir
 RUN mkdir -p data
 
-# Environment
 ENV ENV=production
 ENV PORT=5000
 

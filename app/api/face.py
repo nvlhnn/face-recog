@@ -235,3 +235,73 @@ def delete_face():
             
     except Exception as e:
         return jsonify({"status": "error", "error": str(e)}), 500
+
+
+@face_bp.route('/analyze', methods=['POST'])
+@require_auth
+@rate_limit
+def analyze_face():
+    """Analyze Face Attributes
+    ---
+    tags:
+      - Face
+    summary: Analyze face attributes (eyes open, smile detection)
+    description: Detect if eyes are open and if person is smiling. Useful for liveness checks.
+    consumes:
+      - multipart/form-data
+    parameters:
+      - name: Authorization
+        in: header
+        type: string
+        required: false
+        description: Bearer token (if ACCESS_TOKEN is configured)
+      - name: image
+        in: formData
+        type: file
+        required: true
+        description: Image file containing the face
+    responses:
+      200:
+        description: Analysis completed
+        schema:
+          type: object
+          properties:
+            face_detected:
+              type: boolean
+            eyes_open:
+              type: boolean
+            smiling:
+              type: boolean
+            smile_confidence:
+              type: number
+      400:
+        description: Invalid image or no face detected
+      429:
+        description: Rate limit exceeded
+      500:
+        description: Server error
+    """
+    from app.utils.image_utils import ImageProcessor
+    
+    file = request.files.get('image')
+    
+    is_valid, error_msg = validate_image_file(file)
+    if not is_valid:
+        return jsonify({"status": "error", "error": error_msg}), 400
+    
+    try:
+        result = ImageProcessor.analyze_face_attributes(file)
+        
+        if result.get("face_detected"):
+            return jsonify({
+                "status": "success",
+                **result
+            }), 200
+        else:
+            return jsonify({
+                "status": "fail",
+                **result
+            }), 400
+            
+    except Exception as e:
+        return jsonify({"status": "error", "error": str(e)}), 500
