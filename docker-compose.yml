@@ -18,7 +18,7 @@ services:
       - "traefik.http.routers.face-recog.entrypoints=web"
       - "traefik.http.services.face-recog.loadbalancer.server.port=5000"
     networks:
-      - traefik_default
+      - reverse-proxy
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:5000/health"]
       interval: 30s
@@ -27,5 +27,5 @@ services:
       start_period: 10s
 
 networks:
-  traefik_default:
+  reverse-proxy:
     external: true
