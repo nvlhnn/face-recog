@@ -1,28 +1,20 @@
--- Face Recognition Database Setup
--- ================================
--- Run this script to create the necessary database and tables
+-- Face Recognition Database Schema (Universal)
+-- ==========================================
+-- This schema supports multiple engines (OpenCV, InsightFace)
+-- and can be used with MySQL, MariaDB, or PostgreSQL.
+-- Note: SQLite schema is handled automatically by the application.
 
--- Create Database (if not exists)
-CREATE DATABASE IF NOT EXISTS face_recognition_db
-CHARACTER SET utf8mb4
-COLLATE utf8mb4_unicode_ci;
+-- 1. Users Table
+-- Stores face encodings per user AND per engine
+CREATE TABLE IF NOT EXISTS users (
+    user_id VARCHAR(100) NOT NULL,
+    engine VARCHAR(50) NOT NULL,
+    encoding LONGTEXT NOT NULL, -- JSON array of floats (128 for OpenCV, 512 for InsightFace)
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    PRIMARY KEY (user_id, engine)
+);
 
-USE face_recognition_db;
-
--- Create face_encodings table
-CREATE TABLE IF NOT EXISTS face_encodings (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    user_id VARCHAR(100) NOT NULL UNIQUE,
-    encoding LONGTEXT NOT NULL COMMENT 'JSON serialized face encoding array (128 dimensions)',
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    
-    INDEX idx_user_id (user_id),
-    INDEX idx_created_at (created_at)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
--- Show created tables
-SHOW TABLES;
-
--- Describe the main table
-DESCRIBE face_encodings;
+-- 2. Indexes for performance
+CREATE INDEX idx_users_engine ON users(engine);
+CREATE INDEX idx_users_user_id ON users(user_id);

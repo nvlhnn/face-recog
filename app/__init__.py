@@ -54,11 +54,22 @@ def init_swagger(app):
     swagger_template = {
         "info": {
             "title": "Face Recognition API",
-            "description": "REST API for face registration, verification, and user management (Powered by OpenCV + SFace)",
+            "description": "REST API for face registration, verification, and user management. Supports multiple engines: OpenCV, InsightFace.",
             "version": "2.0.0",
         },
         "basePath": "/",
-        "schemes": ["https", "http"],  # HTTPS first!
+        "schemes": ["http", "https"],
+        "securityDefinitions": {
+            "Bearer": {
+                "type": "apiKey",
+                "name": "Authorization",
+                "in": "header",
+                "description": "Enter: **Bearer &lt;your-token&gt;**"
+            }
+        },
+        "security": [
+            {"Bearer": []}
+        ],
         "tags": [
             {"name": "Health", "description": "Health check endpoints"},
             {"name": "Face", "description": "Face registration and verification"},

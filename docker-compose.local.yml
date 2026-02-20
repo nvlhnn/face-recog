@@ -8,10 +8,10 @@ services:
     restart: unless-stopped
     ports:
       - "5000:5000"
+    env_file:
+      - .env.staging
     environment:
-      - ENV=staging
-      - ACCESS_TOKEN=dev-token-123
-      - FACE_TOLERANCE=0.363
+      - ENV=staging  # Tells the app which environment it is
     volumes:
       - ./data:/app/data
     healthcheck:

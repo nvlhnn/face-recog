@@ -1,13 +1,12 @@
-# Lightweight Face Recognition (OpenCV + SFace)
-# =============================================
-# RAM Usage: ~150MB idle, ~300MB peak
-# Speed: ~100-200ms per verification
+# Face Recognition API
+# ====================
+# Choose your engine via FACE_ENGINE env var
 
 # Web Framework
 Flask==3.0.0
 flask-cors==4.0.0
 
-# Face Recognition (OpenCV DNN - No TensorFlow!)
+# Core Dependencies (always required)
 opencv-python-headless>=4.8.0
 numpy>=1.26.0
 
@@ -15,3 +14,7 @@ numpy>=1.26.0
 python-dotenv==1.0.0
 gunicorn==21.2.0
 flasgger==0.9.7.1
+
+# Engine-specific dependencies
+insightface>=0.7.3
+onnxruntime>=1.15.0

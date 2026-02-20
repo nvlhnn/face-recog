@@ -1,39 +1,58 @@
-# Ultra-lightweight Face Recognition API
-# Target: ~400MB
+# --- STAGE 1: BUILDER ---
+FROM python:3.11-slim AS builder
 
+WORKDIR /build
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential \
+    python3-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+COPY requirements.txt .
+
+# Install packages and aggressively remove cache/bytecode
+RUN pip install --no-cache-dir --user -r requirements.txt gunicorn \
+    && find /root/.local -name "*.pyc" -delete \
+    && find /root/.local -name "__pycache__" -delete
+
+
+# --- STAGE 2: RUNTIME ---
 FROM python:3.11-slim
 
 WORKDIR /app
 
-# Install minimal runtime deps (no libgl needed for headless!)
+# Copy only the compiled Python packages from stage 1
+COPY --from=builder /root/.local /root/.local
+ENV PATH=/root/.local/bin:$PATH
+
+# Minimal runtime dependencies
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    libglib2.0-0 \
-    libsm6 \
-    libxext6 \
-    libxrender1 \
-    curl \
+    libglib2.0-0 libsm6 libxext6 libxrender1 curl \
     && rm -rf /var/lib/apt/lists/* \
     && apt-get clean
 
-# Install Python packages
-COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt gunicorn
+# Copy only the download script first to bake models in a separate layer
+COPY download_models.py .
 
-# Copy app
+# Bake models into the image (Download ALL engines by default)
+RUN python download_models.py --all
+
+# Copy the rest of the app
 COPY . .
 
-# Download models
-RUN python download_models.py
-
-# Create data dir
-RUN mkdir -p data
-
+# Runtime defaults
 ENV ENV=production
 ENV PORT=5000
+ENV FACE_ENGINE=insightface
+ENV INSIGHTFACE_MODEL=buffalo_l
 
 EXPOSE 5000
 
-HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 \
     CMD curl -f http://localhost:5000/health || exit 1
 
-CMD ["gunicorn", "-w", "2", "-b", "0.0.0.0:5000", "run:app"]
+# Workers: override with GUNICORN_WORKERS env var
+# For 2GB RAM + InsightFace: use 1 worker
+# For 2GB RAM + OpenCV: use 2-3 workers
+# --preload shares the model across workers (saves ~40% RAM)
+CMD ["sh", "-c", "gunicorn -w ${GUNICORN_WORKERS:-1} --preload -b 0.0.0.0:5000 --timeout 120 run:app"]

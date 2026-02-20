@@ -135,30 +135,19 @@ class Database:
     
     def _create_tables(self):
         with self.get_connection() as conn:
-            # Users Table with encoding storage
+            # Users Table with encoding storage and engine tracking
             conn.execute('''
                 CREATE TABLE IF NOT EXISTS users (
-                    user_id TEXT PRIMARY KEY,
+                    user_id TEXT,
+                    engine TEXT,
                     encoding TEXT,
                     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    PRIMARY KEY (user_id, engine)
                 )
             ''')
             
-            # Attendance Log Table
-            conn.execute('''
-                CREATE TABLE IF NOT EXISTS attendance_logs (
-                    id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    user_id TEXT NOT NULL,
-                    timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                    type TEXT DEFAULT 'check_in',
-                    confidence_score REAL,
-                    FOREIGN KEY(user_id) REFERENCES users(user_id)
-                )
-            ''')
-            
-            conn.execute('CREATE INDEX IF NOT EXISTS idx_logs_user ON attendance_logs(user_id)')
-            conn.execute('CREATE INDEX IF NOT EXISTS idx_logs_time ON attendance_logs(timestamp)')
+            conn.execute('CREATE INDEX IF NOT EXISTS idx_users_engine ON users(engine)')
             conn.commit()
     
     @contextmanager
